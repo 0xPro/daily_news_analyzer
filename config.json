@@ -1,0 +1,15 @@
+{
+  "watchlist": [],
+  "news_api": {
+    "key": "",
+    "sources": []
+  },
+  "price_api": {
+    "key": "",
+    "provider": ""
+  },
+  "telegram": {
+    "bot_token": "",
+    "chat_id": ""
+  }
+}

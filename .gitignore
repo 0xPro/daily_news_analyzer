@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Runtime data written by main.py (tracked via .gitkeep)
+data/cache/*.json
+data/theses/*.md
+
+# IDE / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
