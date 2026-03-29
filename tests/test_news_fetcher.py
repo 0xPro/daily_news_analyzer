@@ -5,7 +5,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from tools.news_fetcher import MAX_CONTENT_LENGTH, fetch_news
+from tools.news_fetcher import MAX_CONTENT_LENGTH, MAX_TITLE_LENGTH, fetch_news
 
 
 class _FakeTwitterScraper:
@@ -155,6 +155,7 @@ class NewsFetcherTests(unittest.TestCase):
                     "Nasdaq hits correction territory. Tech stock valuations back to the lows seen ar",
                 ],
             )
+            self.assertLessEqual(len(all_articles[1]["title"]), MAX_TITLE_LENGTH)
 
 
 if __name__ == "__main__":
