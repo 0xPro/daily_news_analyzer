@@ -21,6 +21,7 @@ except ImportError:  # pragma: no cover - dependency is optional at import time
 
 LOGGER = logging.getLogger(__name__)
 MAX_CONTENT_LENGTH = 500
+MAX_TITLE_LENGTH = 80
 
 
 def fetch_news(tickers: list[str], config: dict) -> list[dict]:
@@ -61,11 +62,11 @@ def _load_sources(config: dict) -> list[dict[str, Any]]:
         return []
 
     normalized: list[dict[str, Any]] = []
-    for rss_url in raw_sources.get("rss", []) + raw_sources.get("rss_feeds", []):
+    for rss_url in _deduplicate(raw_sources.get("rss", []) + raw_sources.get("rss_feeds", [])):
         normalized.append({"type": "rss", "url": rss_url})
     for page_url in raw_sources.get("urls", []):
         normalized.append({"type": "url", "url": page_url})
-    for handle in raw_sources.get("twitter", []) + raw_sources.get("twitter_handles", []):
+    for handle in _deduplicate(raw_sources.get("twitter", []) + raw_sources.get("twitter_handles", [])):
         normalized.append({"type": "twitter", "handle": handle})
 
     text_folder = raw_sources.get("text_folder") or raw_sources.get("text_files")
@@ -257,7 +258,7 @@ def _make_article(
     }
 
 
-def _save_filtered_articles(articles: list[dict], config: dict) -> str:
+def _save_filtered_articles(articles: list[dict], config: dict) -> None:
     output_dir = config.get("news_output_dir") or os.path.join("data", "cache")
     os.makedirs(output_dir, exist_ok=True)
     output_path = os.path.join(output_dir, f"{_current_output_stamp()}-filtered.json")
@@ -265,15 +266,23 @@ def _save_filtered_articles(articles: list[dict], config: dict) -> str:
     with open(output_path, "w", encoding="utf-8") as handle:
         json.dump(articles, handle, indent=2)
 
-    return output_path
-
-
 def _current_output_stamp() -> str:
     return datetime.now(timezone.utc).strftime("%Y%m%d%H")
 
 
 def _source_label(source: dict[str, Any]) -> str:
     return source.get("name") or source.get("url") or source.get("path") or source.get("handle") or "unknown source"
+
+
+def _deduplicate(values: list[Any]) -> list[Any]:
+    seen: set[Any] = set()
+    unique_values: list[Any] = []
+    for value in values:
+        if value in seen:
+            continue
+        seen.add(value)
+        unique_values.append(value)
+    return unique_values
 
 
 def _first_content_value(content_entries: Any) -> str:
@@ -313,7 +322,7 @@ def _title_from_text(text: str, fallback: str) -> str:
     if not cleaned_text:
         return fallback
 
-    return cleaned_text[:80].rstrip()
+    return cleaned_text[:MAX_TITLE_LENGTH].rstrip()
 
 
 def _tweet_url(handle: str, tweet: dict[str, Any]) -> str:
