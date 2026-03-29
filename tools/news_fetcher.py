@@ -198,7 +198,7 @@ def _fetch_text_items(source: dict[str, Any]) -> list[dict]:
         with file_path.open("r", encoding="utf-8") as handle:
             for line_number, line in enumerate(handle, start=1):
                 cleaned_line = _clean_text(line)
-                if not cleaned_line:
+                if not cleaned_line or _is_text_heading(cleaned_line):
                     continue
 
                 items.append(
@@ -226,8 +226,8 @@ def _match_tickers(article: dict, tickers: list[str]) -> list[dict]:
         item["ticker"] = None
         return [item]
 
-    haystack = f"{article.get('title', '')} {article.get('content', '')}".lower()
-    matches = [ticker for ticker in tickers if ticker.lower() in haystack]
+    haystack = f"{article.get('title', '')} {article.get('content', '')}"
+    matches = [ticker for ticker in tickers if _ticker_in_text(ticker, haystack)]
 
     matched_articles: list[dict] = []
     for ticker in matches:
@@ -294,6 +294,24 @@ def _first_content_value(content_entries: Any) -> str:
         return str(first_item.get("value") or "")
 
     return str(first_item)
+
+
+def _is_text_heading(text: str) -> bool:
+    if re.fullmatch(r"[A-Za-z]+", text):
+        return True
+
+    if "/" not in text:
+        return False
+
+    return bool(re.fullmatch(r"[A-Za-z ]+(?:/[A-Za-z ]+)+", text))
+
+
+def _ticker_in_text(ticker: str, text: str) -> bool:
+    if not ticker:
+        return False
+
+    pattern = rf"(?<![A-Za-z0-9])\$?{re.escape(ticker)}(?![A-Za-z0-9])"
+    return re.search(pattern, text, flags=re.IGNORECASE) is not None
 
 
 def _extract_html_title(html: str) -> str:
